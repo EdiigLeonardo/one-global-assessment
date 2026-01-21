@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signupSchema } from "@/lib/auth-schema";
-import { register as registerUser } from "@/services/reqres";
+import { signupAction } from "../actions";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import { PasswordInput } from "@/components/ui/password-input";
 type SignupFormData = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
-  const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const {
     register,
@@ -25,19 +25,14 @@ export default function SignupPage() {
     resolver: zodResolver(signupSchema),
   });
 
-  useEffect(() => {
-    if (sessionToken) {
-      document.cookie = `session_token=${sessionToken}; path=/`;
-      window.location.href = "/dashboard";
-    }
-  }, [sessionToken]);
-
   async function onSubmit(data: SignupFormData) {
-    try {
-      const res = await registerUser(data.email, data.password);
-      setSessionToken(res.token);
-    } catch (error) {
-      console.error(error);
+    setError(null);
+    const result = await signupAction(data.email, data.password);
+    
+    if (result.success) {
+      window.location.href = "/dashboard";
+    } else {
+      setError(result.error || "Ocorreu um erro ao criar a conta");
     }
   }
 
@@ -51,6 +46,12 @@ export default function SignupPage() {
       </header>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        {error && (
+          <div className="p-3 text-sm font-medium text-destructive bg-destructive/10 rounded-md">
+            {error}
+          </div>
+        )}
+
         <div>
           <Label>Email</Label>
           <Input {...register("email")} placeholder="email@exemplo.com" />

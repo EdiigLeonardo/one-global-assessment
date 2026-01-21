@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useUsers } from "@/hooks/useUsers";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,7 +11,7 @@ import { DeleteUserDialog } from "@/components/users/delete-user-dialog";
 import { UsersPagination } from "@/components/users/users-pagination";
 import type { User } from "@/types/user";
 
-export default function DashboardPage() {
+function DashboardContent() {
   const params = useSearchParams();
   const page = Number(params.get("page") || 1);
 
@@ -79,5 +79,13 @@ export default function DashboardPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div className="p-6">Carregando...</div>}>
+      <DashboardContent />
+    </Suspense>
   );
 }

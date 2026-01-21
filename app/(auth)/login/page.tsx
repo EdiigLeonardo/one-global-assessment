@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema } from "@/lib/auth-schema";
-import { login } from "@/services/reqres";
+import { loginAction } from "../actions";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import { PasswordInput } from "@/components/ui/password-input";
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const {
     register,
@@ -25,16 +25,15 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
-  useEffect(() => {
-    if (sessionToken) {
-      document.cookie = `session_token=${sessionToken}; path=/`;
-      window.location.href = "/dashboard";
-    }
-  }, [sessionToken]);
-
   async function onSubmit(data: LoginFormData) {
-    const res = await login(data.email, data.password);
-    setSessionToken(res.token);
+    setError(null);
+    const result = await loginAction(data.email, data.password);
+    
+    if (result.success) {
+      window.location.href = "/dashboard";
+    } else {
+      setError(result.error || "Ocorreu um erro ao entrar");
+    }
   }
 
   return (
@@ -47,6 +46,12 @@ export default function LoginPage() {
       </header>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        {error && (
+          <div className="p-3 text-sm font-medium text-destructive bg-destructive/10 rounded-md">
+            {error}
+          </div>
+        )}
+
         <div>
           <Label>Email</Label>
           <Input {...register("email")} placeholder="email@exemplo.com" />
