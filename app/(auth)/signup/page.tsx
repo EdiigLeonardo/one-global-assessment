@@ -4,12 +4,13 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signupSchema } from "@/lib/auth-schema";
-import { login } from "@/services/reqres";
+import { register as registerUser } from "@/services/reqres";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 
 type SignupFormData = z.infer<typeof signupSchema>;
 
@@ -32,8 +33,12 @@ export default function SignupPage() {
   }, [sessionToken]);
 
   async function onSubmit(data: SignupFormData) {
-    const res = await login(data.email, data.password);
-    setSessionToken(res.token);
+    try {
+      const res = await registerUser(data.email, data.password);
+      setSessionToken(res.token);
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   return (
@@ -56,7 +61,7 @@ export default function SignupPage() {
 
         <div>
           <Label>Password</Label>
-          <Input {...register("password")} type="password" />
+          <PasswordInput {...register("password")} placeholder="••••••••" />
           {errors.password && (
             <p className="text-sm text-destructive">
               {errors.password.message}
@@ -66,7 +71,7 @@ export default function SignupPage() {
 
         <div>
           <Label>Confirmar Password</Label>
-          <Input {...register("confirmPassword")} type="password" />
+          <PasswordInput {...register("confirmPassword")} placeholder="••••••••" />
           {errors.confirmPassword && (
             <p className="text-sm text-destructive">
               {errors.confirmPassword.message}
